@@ -1,56 +1,64 @@
 import express from 'express';
+import cors from 'cors';
 import { chromium } from 'playwright';
-import jsPDF, { jspdf } from 'jspdf';
+import { jsPDF } from 'jspdf';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicit root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.post('/download-pdf', async (req, res) => {
+  try {
     const { url } = req.body;
 
     const browser = await chromium.launch();
     const page = await browser.newPage();
 
-    await page.goto(url, { waitUntil: 'networkidle'});
+    await page.goto(url, { waitUntil: 'networkidle' });
 
-    const screenshot = await page.screenshot({
-        fullPage: true,
-        type: 'png'
-    });
+    const screenshot = await page.screenshot({ fullPage: true });
+
+    const { width, height } = await page.evaluate(() => ({
+      width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight
+    }));
 
     await browser.close();
 
     const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: 'a4'
+      orientation: height > width ? 'portrait' : 'landscape',
+      unit: 'px',
+      format: [width, height]
     });
 
-    const img = new Image();
-    img.src = `data:image/png;base64,${screenshot.toString('base64')}`;
+    pdf.addImage(screenshot, 'PNG', 0, 0, width, height);
 
-    await new Promise(resolve => (img.onload = resolve));
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const ratio = pageWidth / img.width;
-    const imgHeight = img.height * ratio;
-
-    pdf.addImage(
-        img.src,
-        'PNG',
-        0,
-        0,
-        pageWidth,
-        imgHeight
-    );
-
-    const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+    const buffer = Buffer.from(pdf.output('arraybuffer'));
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="page.pdf"');
-    res.send(pdfBuffer);
+    res.send(buffer);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('PDF generation failed');
+  }
 });
 
 app.listen(3000, () => {
-    console.log("PDF Server running on http://localhost:3000");
-})
+  console.log('✅ App running at http://localhost:3000');
+});

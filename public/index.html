@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <main>
+        <h1>Hi, this is my pdf screenshot test app</h1>
+
+
+        <div class="button-container">
+            <button id="download">Download PDF</button>
+        </div>
+    </main>
+
+
+
+    <script src="download.js"></script>
+     <!-- <script>
+        document.getElementById('download').onclick = async () => {
+    const response = await fetch('/download-pdf', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            url: window.location.href
+        })
+    });
+
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'page-pdf';
+    link.click();
+}
+     </script> -->
+</body>
+</html>
