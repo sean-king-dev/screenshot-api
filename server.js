@@ -25,22 +25,10 @@ app.post('/download-pdf', async (req, res) => {
     const { url } = req.body;
 
     // Launch headless browser
-    const browser = await chromium.launch({ 
-      headless: true,
-      args: ['--no-sandbox', '--disable-gpu'] }); // <-- important for Render
+    const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-gpu'] }); // <-- important for Render
     const page = await browser.newPage();
 
-    // await page.goto(url, { waitUntil: 'networkidle' });
-
-    if(html) {
-      await page.setContent(html, { waitUntil: 'networkidle' });
-    } else if (url) {
-      await page.goto(url, { waitUntil: 'networkidle'});
-    } else {
-      throw new Error('No cintent provided');
-    }
-
-    await page.waitForTimeout(1000);
+    await page.goto(url, { waitUntil: 'networkidle' });
 
     // Take full-page screenshot as PNG buffer
     const screenshot = await page.screenshot({ fullPage: true });
@@ -61,19 +49,13 @@ app.post('/download-pdf', async (req, res) => {
     });
 
     // Convert screenshot buffer to base64 for jsPDF
-    // const imgBase64 = screenshot.toString('base64');
-    // pdf.addImage(imgBase64, 'PNG', 0, 0, width, height);
-
-    pdf.addImage(screenshot.toString('base64'), 'PNG', 0, 0, width, height);
+    const imgBase64 = screenshot.toString('base64');
+    pdf.addImage(imgBase64, 'PNG', 0, 0, width, height);
 
     // Output PDF as buffer
     const pdfOutput = pdf.output('datauristring');
-    // const base64 = pdfOutput.split(',')[1];
-    // const buffer = Buffer.from(base64, 'base64');
-
-    const buffer = Buffer.from(pdfOutput.split(',')[1], 'base64');
-
-
+    const base64 = pdfOutput.split(',')[1];
+    const buffer = Buffer.from(base64, 'base64');
     // const buffer = Buffer.from(pdf.output('arraybuffer'));
 
     // Send correct headers
