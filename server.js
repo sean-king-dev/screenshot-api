@@ -25,7 +25,7 @@ app.post('/download-pdf', async (req, res) => {
     const { url } = req.body;
 
     // Launch headless browser
-    const browser = await chromium.launch({ args: ['--no-sandbox'] }); // <-- important for Render
+    const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-gpu'] }); // <-- important for Render
     const page = await browser.newPage();
 
     await page.goto(url, { waitUntil: 'networkidle' });
@@ -53,7 +53,10 @@ app.post('/download-pdf', async (req, res) => {
     pdf.addImage(imgBase64, 'PNG', 0, 0, width, height);
 
     // Output PDF as buffer
-    const buffer = Buffer.from(pdf.output('arraybuffer'));
+    const pdfOutput = pdf.output('datauristring');
+    const base64 = pdfOutput.split(',')[1];
+    const buffer = Buffer.from(base64, 'base64');
+    // const buffer = Buffer.from(pdf.output('arraybuffer'));
 
     // Send correct headers
     res.setHeader('Content-Type', 'application/pdf');
