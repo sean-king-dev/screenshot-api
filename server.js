@@ -21,7 +21,7 @@ app.post('/download-pdf', async (req, res) => {
     if (!url) throw new Error('No URL provided');
 
     // Launch headless browser (important for Render)
-    const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-gpu'] });
+    const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
     const page = await browser.newPage();
 
     await page.goto(url, { waitUntil: 'networkidle' });
